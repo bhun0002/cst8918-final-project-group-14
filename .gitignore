@@ -1,0 +1,35 @@
+node_modules
+
+/.cache
+/build
+/public/build
+.env
+
+.DS_Store
+
+
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Ignore Terraform crash logs
+crash.log
+
+# Ignore .terraform directory
+.terraform/
+
+# Ignore plan files
+*.tfplan
+
+# Ignore sensitive override files
+terraform.tfvars
+terraform.tfvars.json
+
+# Ignore any log or output files
+*.log
+*.out
+
+# Optional: VS Code and OS-specific ignores
+.vscode/
+.DS_Store
+Thumbs.db
