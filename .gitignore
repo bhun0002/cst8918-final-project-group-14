@@ -33,3 +33,7 @@ terraform.tfvars.json
 .vscode/
 .DS_Store
 Thumbs.db
+
+.terraform/
+*.tfstate
+*.tfstate.*
