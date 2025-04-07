@@ -21,4 +21,7 @@ spec:
             - containerPort: 3000
           env:
             - name: WEATHER_API_KEY
-              value: "AAABAL6viSrbpvqMhFmX/ZCYS3e50fl6nTYD5uwOM2GYF9IZFgeHH3cZ6/GiYYu2UAsg92kiiioCqJpJ7hMwCg=="
+              valueFrom:
+               secretKeyRef:
+                name: weather-api-secret
+                key: WEATHER_API_KEY
