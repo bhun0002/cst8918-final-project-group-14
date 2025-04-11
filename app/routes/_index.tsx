@@ -1,16 +1,16 @@
-import { json } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { fetchWeatherData } from '../api-services/open-weather-service'
-import { capitalizeFirstLetter } from '../utils/text-formatting'
-import type { MetaFunction } from '@remix-run/node'
+import {json} from '@remix-run/node'
+import {useLoaderData} from '@remix-run/react'
+import {fetchWeatherData} from '../api-services/open-weather-service'
+import {capitalizeFirstLetter} from '../utils/text-formatting'
+import type {MetaFunction} from '@remix-run/node'
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Remix Weather' },
+    {title: 'Remix Weather'},
     {
       name: 'description',
-      content: 'A demo web app using Remix and OpenWeather API.',
-    },
+      content: 'A demo web app using Remix and OpenWeather API.'
+    }
   ]
 }
 
@@ -19,38 +19,50 @@ const location = {
   postalCode: 'K2G 1V8', // Algonquin College, Woodroffe Campus
   lat: 45.3211,
   lon: -75.7391,
-  countryCode: 'CA',
+  countryCode: 'CA'
 }
 const units = 'metric'
 
 export async function loader() {
-  // TODO: accept query params for location and units
-  // TODO: look up location by postal code
+  try {
+    const data = await fetchWeatherData({
+      lat: location.lat,
+      lon: location.lon,
+      units: units
+    });
 
-  const data = await fetchWeatherData({
-    lat: location.lat,
-    lon: location.lon,
-    units: units,
-  })
-  return json({ currentConditions: data })
+    if (!data || !data.weather || data.weather.length === 0) {
+      throw new Error('Invalid weather data received from API');
+    }
+
+    return json({ currentConditions: data });
+  } catch (error) {
+    console.error('❌ Weather fetch failed:', error);
+    throw new Response('Weather data unavailable', { status: 500 });
+  }
 }
 
 export default function CurrentConditions() {
-  const { currentConditions } = useLoaderData<typeof loader>()
-  const weather = currentConditions.weather[0]
+  const {currentConditions} = useLoaderData<typeof loader>()
+  // 🛡️ Safe extraction
+  const weather = currentConditions?.weather?.[0];
+
+  if (!weather) {
+    return <p>Weather information is currently unavailable.</p>;
+  }
   return (
     <>
       <main
         style={{
           padding: '1.5rem',
           fontFamily: 'system-ui, sans-serif',
-          lineHeight: '1.8',
+          lineHeight: '1.8'
         }}
       >
         <h1>Remix Weather</h1>
         <p>
           For Algonquin College, Woodroffe Campus <br />
-          <span style={{ color: 'hsl(220, 23%, 60%)' }}>
+          <span style={{color: 'hsl(220, 23%, 60%)'}}>
             (LAT: {location.lat}, LON: {location.lon})
           </span>
         </p>
@@ -60,31 +72,31 @@ export default function CurrentConditions() {
             display: 'flex',
             flexDirection: 'row',
             gap: '2rem',
-            alignItems: 'center',
+            alignItems: 'center'
           }}
         >
           <img src={getWeatherIconUrl(weather.icon)} alt="" />
-          <div style={{ fontSize: '2rem' }}>
+          <div style={{fontSize: '2rem'}}>
             {currentConditions.main.temp.toFixed(1)}°C
           </div>
         </div>
         <p
           style={{
             fontSize: '1.2rem',
-            fontWeight: '400',
+            fontWeight: '400'
           }}
         >
           {capitalizeFirstLetter(weather.description)}. Feels like{' '}
-          {currentConditions.main['feels_like'].toFixed(1)}°C.
+          {currentConditions['main']['feels_like'].toFixed(1)}°C.
           <br />
-          <span style={{ color: 'hsl(220, 23%, 60%)', fontSize: '0.85rem' }}>
+          <span style={{color: 'hsl(220, 23%, 60%)', fontSize: '0.85rem'}}>
             updated at{' '}
             {new Intl.DateTimeFormat('en-CA', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
               hour: 'numeric',
-              minute: '2-digit',
+              minute: '2-digit'
             }).format(currentConditions.dt * 1000)}
           </span>
         </p>
@@ -93,13 +105,13 @@ export default function CurrentConditions() {
         style={{
           backgroundColor: 'hsl(220, 54%, 96%)',
           padding: '0.5rem 1.5rem 1rem 1.5rem',
-          borderRadius: '0.25rem',
+          borderRadius: '0.25rem'
         }}
       >
         <h2>Raw Data</h2>
         <pre>{JSON.stringify(currentConditions, null, 2)}</pre>
       </section>
-      <hr style={{ marginTop: '2rem' }} />
+      <hr style={{marginTop: '2rem'}} />
       <p>
         Learn how to customize this app. Read the{' '}
         <a target="_blank" href="https://remix.run/docs" rel="noreferrer">

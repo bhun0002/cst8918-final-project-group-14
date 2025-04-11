@@ -22,6 +22,6 @@ spec:
           env:
             - name: WEATHER_API_KEY
               valueFrom:
-               secretKeyRef:
-                name: weather-api-secret
-                key: WEATHER_API_KEY
+                secretKeyRef:
+                  name: weather-api-secret
+                  key: WEATHER_API_KEY
