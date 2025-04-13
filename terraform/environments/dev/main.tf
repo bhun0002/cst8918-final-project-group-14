@@ -30,17 +30,10 @@ module "acr" {
 }
 
 module "redis" {
-  source              = "../../modules/redis"
+  source              = "../../redis"
   resource_prefix     = var.resource_prefix
   location            = var.location
   resource_group_name = module.network.resource_group_name
   environment         = var.environment
 }
 
-module "app_resources" {
-  source            = "../modules/app-resources"
-  acr_id            = module.acr.acr_id
-  aks_principal_id  = module.aks.aks_identity_principal_id
-  namespace         = "weather"
-  acr_login_server  = module.acr.acr_login_server
-}

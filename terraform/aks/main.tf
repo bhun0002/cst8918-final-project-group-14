@@ -1,4 +1,4 @@
-resource "azurerm_kubernetes_cluster" "admin" {
+resource "azurerm_kubernetes_cluster" "aks" {
   name                = "${var.resource_prefix}-aks-admin"
   location            = var.location
   resource_group_name = var.resource_group_name
