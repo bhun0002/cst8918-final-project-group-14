@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: weather-app
-  labels:
-    app: weather-app
 spec:
   replicas: 1
   selector:
@@ -16,12 +14,9 @@ spec:
     spec:
       containers:
         - name: weather-app
-          image: cst8918final14acr.azurecr.io/weather-app:latest
+          image: cst8918final14prodacr.azurecr.io/weather-app:latest
           ports:
             - containerPort: 3000
-          env:
-            - name: WEATHER_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: weather-api-secret
-                  key: WEATHER_API_KEY
+          envFrom:
+            - secretRef:
+                name: weather-app-secret

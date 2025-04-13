@@ -5,7 +5,7 @@ resource "azurerm_redis_cache" "weather" {
   capacity            = 0
   family              = "C"
   sku_name            = "Basic"
-  enable_non_ssl_port = true
+  non_ssl_port_enabled = true
 
   tags = {
     Environment = var.environment
