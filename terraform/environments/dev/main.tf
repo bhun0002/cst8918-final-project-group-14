@@ -15,7 +15,7 @@ module "aks" {
   aks_dns_service_ip  = var.aks_dns_service_ip
   environment         = var.environment
 }
- 
+
 module "acr" {
   source              = "../../acr"
   resource_prefix     = var.resource_prefix
