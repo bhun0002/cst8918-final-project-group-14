@@ -24,7 +24,6 @@ build/
 *.tfstate.*
 .crash
 .terraform/
-terraform.tfvars
 override.tf
 override.tf.json
 terraform.tfvars.json

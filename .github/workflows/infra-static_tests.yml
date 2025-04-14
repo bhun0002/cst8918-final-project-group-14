@@ -1,0 +1,44 @@
+name: 'Terraform Static Tests'
+
+on:
+  push:
+
+defaults:
+  run:
+    working-directory: terraform/environments/dev
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  terraform-static-tests:
+    name: 'Terraform Static Tests'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init (no backend)
+      run: terraform init -backend=false
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive
+
+    - name: tfsec Scan
+      uses: tfsec/tfsec-sarif-action@master
+      with:
+        sarif_file: tfsec.sarif
+
+    - name: Upload SARIF File
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: tfsec.sarif

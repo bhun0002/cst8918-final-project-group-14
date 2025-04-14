@@ -17,12 +17,7 @@ variable "admin_subnet_id" {
   type        = string
   description = "Subnet ID for test AKS"
 }
- 
-variable "kubernetes_version" {
-  type        = string
-  description = "AKS Kubernetes version"
-  default     = "1.32.0"
-}
+
 
 variable "aks_vm_size" {
   type        = string

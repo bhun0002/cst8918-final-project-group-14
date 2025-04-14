@@ -27,3 +27,25 @@ variable "environment" {
   description = "The deployment environment name"
   type        = string
 }
+
+variable "image_tag" {
+  description = "Docker image tag for the application"
+  type        = string
+  default     = "latest"
+}
+
+variable "acr_login_server" {
+  description = "Azure Container Registry login server"
+  type        = string
+}
+
+variable "acr_name" {
+  description = "Name of the Azure Container Registry"
+  type        = string
+}
+
+variable "image_name" {
+  description = "Name of the Docker image to deploy"
+  type        = string
+  default     = "remix-weather"
+}
