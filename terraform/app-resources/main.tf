@@ -72,11 +72,16 @@ resource "kubernetes_deployment" "remix_app" {
             name  = "REDIS_PASSWORD"
             value = azurerm_redis_cache.redis.primary_access_key
           }
-
           env {
-            name  = "WEATHER_API_KEY"
-            value = var.weather_api_key
+            name = "WEATHER_API_KEY"
+            value_from {
+             secret_key_ref {
+              name = "remix-weather-secrets"
+              key  = "WEATHER_API_KEY"
+            }
+           }
           }
+          
         }
       }
     }

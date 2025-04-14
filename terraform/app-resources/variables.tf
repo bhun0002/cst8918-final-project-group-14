@@ -23,12 +23,6 @@ variable "image_tag" {
   description = "Docker image tag to deploy (e.g. commit SHA)"
 }
 
-variable "weather_api_key" {
-  description = "OpenWeather API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "acr_name" {
   description = "Name of the Azure Container Registry"
   type        = string

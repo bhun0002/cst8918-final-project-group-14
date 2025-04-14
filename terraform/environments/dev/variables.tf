@@ -33,11 +33,6 @@ variable "kubernetes_version" {
   type        = string
 }
 
-variable "weather_api_key" {
-  description = "Weather API key for the application"
-  type        = string
-  sensitive   = true
-}
 
 variable "image_tag" {
   description = "Docker image tag for the application"

@@ -32,7 +32,6 @@ module "app" {
   acr_login_server    = var.acr_login_server
   image_name          = var.image_name
   image_tag           = var.image_tag
-  weather_api_key     = var.weather_api_key
   environment         = var.environment
 
   providers = {
