@@ -1,17 +1,19 @@
-import { createClient } from 'redis'
 
-const url = process.env.REDIS_URL
-
-if (!url) {
-  throw new Error('REDIS_URL is not defined')
-}
-
-export const redis = await createClient({
-  url,
-  socket: {
-    tls: true,
-    rejectUnauthorized: false // skip cert validation for dev; set to true in prod with valid CA
-  }
-})
-  .on('error', (err) => console.error('Redis client connection error', err))
-  .connect()
+import { createClient } from 'redis';
+ 
+  // Support local dev and Azure Redis
+  const url = process.env.REDIS_URL || 'redis://localhost:6379';
+  const password = process.env.REDIS_PASSWORD;
+   
+  export const redis = await createClient({
+    url,
+    password, // ✅ required for Azure Redis
+    socket: {
+      tls: url.startsWith('rediss://') || url.includes('6380'), // ✅ enable TLS only when needed
+      rejectUnauthorized: false // ⚠️ acceptable for Azure public certs
+    }
+  })
+    .on('error', (err) => {
+      console.error('❌ Redis client connection error:', err);
+    })
+    .connect();

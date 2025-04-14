@@ -1,0 +1,12 @@
+resource_prefix    = "final14cst8918dev" # <-- use your unique prefix
+location           = "canadaeast"
+aks_vm_size        = "Standard_B2s"
+environment        = "dev"
+aks_dns_service_ip = "10.240.0.10"
+aks_service_cidr   = "10.240.0.0/16"
+weather_api_key     = "2827ff249e59a451aa37630e6d80a971"
+image_tag           = "latestV2"
+acr_login_server = "final14cst8918devacr.azurecr.io"
+image_name       = "cst8918-a01-weather-app"
+kubernetes_version  = "1.32.0"
+acr_name  = "final14cst8918devacr"
