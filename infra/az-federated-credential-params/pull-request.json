@@ -1,0 +1,8 @@
+{
+    "name": "pull-request",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:bhun0002/cst8918-final-project-group-14:pull_request",
+    "description": "CST8918 GitHub Actions - PR Checks",
+    "audiences": ["api://AzureADTokenExchange"]
+}
+  

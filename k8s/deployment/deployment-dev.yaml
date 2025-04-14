@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: weather-app
-          image: cst8918final14devacr.azurecr.io/weather-app:latest
+          image: final14cst8918devacr.azurecr.io/weather-app:latest
           ports:
             - containerPort: 3000
           envFrom:
