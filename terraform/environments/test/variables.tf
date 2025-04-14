@@ -28,12 +28,6 @@ variable "environment" {
   type        = string
 }
 
-variable "kubernetes_version" {
-  description = "Kubernetes version"
-  type        = string
-}
-
-
 variable "image_tag" {
   description = "Docker image tag for the application"
   type        = string

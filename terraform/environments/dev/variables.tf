@@ -28,12 +28,6 @@ variable "environment" {
   type        = string
 }
 
-variable "kubernetes_version" {
-  description = "Kubernetes version"
-  type        = string
-}
-
-
 variable "image_tag" {
   description = "Docker image tag for the application"
   type        = string
@@ -54,11 +48,5 @@ variable "image_name" {
   description = "Name of the Docker image to deploy"
   type        = string
   default     = "remix-weather"
-}
-
-variable "redis_hostname" {
-  description = "Hostname of the Redis cache"
-  type        = string
-  default     = "redis-cache"
 }
 
