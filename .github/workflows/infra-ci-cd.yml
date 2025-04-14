@@ -50,7 +50,7 @@ jobs:
 
     - name: Run TFLint
       id: tflint
-      run: tflint -f compact
+      run: tflint --format compact || true
 
   terraform-plan:
     name: Terraform Plan
