@@ -35,12 +35,6 @@ variable "image_name" {
   default     = "weather"
 }
 
-variable "redis_hostname" {
-  description = "Hostname of the Redis cache"
-  type        = string
-  default     = "redis-cache"
-}
-
 variable "environment" {
   description = "The deployment environment name"
   type        = string
