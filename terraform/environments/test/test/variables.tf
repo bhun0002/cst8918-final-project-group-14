@@ -50,9 +50,3 @@ variable "image_name" {
   default     = "remix-weather"
 }
 
-variable "redis_hostname" {
-  description = "Hostname of the Redis cache"
-  type        = string
-  default     = "redis-cache"
-}
-
