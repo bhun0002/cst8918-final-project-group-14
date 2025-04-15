@@ -1,372 +1,963 @@
 CST8918 - DevOps: Infrastructure as Code  
-Prof: Robert McKenney
+Submitted to Prof: Robert McKenney
 
-# LAB-A03 Pulumi Weather App
+# Remix Weather App Infrastructure – Final Capstone Project
 
-In this hands-on lab activity you will revisit the weather app from [LAB-A01](https://github.com/rlmckenney/cst8918-w25-a01-weather). This time you have been asked to make the solution more robust and further reduce redundant hits on the OpenWeather API. To accomplish this, the team has decided to replace the in-app memory cache with a Redis cache that will be shared by all container instances.
+## Overview
 
-Additionally, it is time to deploy this app to our public cloud provider (Azure). The team has decided to use [Pulumi](https://pulumi.com) to manage the provisioning of infrastructure resources and deployment of the application.
+This capstone project showcases a complete Infrastructure as Code (IaC) implementation using Terraform on Microsoft Azure. It revisits the **Remix Weather Application** and deploys it to Azure Kubernetes Service (AKS) clusters across `dev`, `test`, and `prod` environments, with supporting services including Azure Container Registry (ACR) and Azure Cache for Redis.
 
-## High-level system overview
+Infrastructure deployment is automated using **GitHub Actions** for Terraform workflows, Docker image builds, and Kubernetes application deployment. The Terraform state is securely stored in **Azure Blob Storage**, and the code is modularized for reusability and collaboration.
 
-This is a simplified diagram of the system architecture that you will be building and deploying.
 
-![Azure Container App system diagram](./system-architecture.png)
+# Team Members:
+1. **Neetika Prashar** - [pras0044@algonquinlive.com](mailto:pras0044@algonquinlive.com)  
+2. **Bhavika Pathria** - [path0053@algonquinlive.com](mailto:path0053@algonquinlive.com)
+3. **Deval Bhungaliya** -[bhun0002@algonquinlive.com](mailto:bhun0002@algonquinlive.com)
+4. **Parth Patel** -     [pate0306@algonquinlive.com](mailto:pate0306@algonquinlive.com) 
 
-## Objectives
+## GitHub Profile Links:
+1. **Neetika Prashar** - [GitHub Profile](https://github.com/neetika15122)  
+2. **Bhavika Pathria** - [GitHub Profile](https://github.com/BhavikaPathria-02) 
+3. **Deval Bhungaliya** -[GitHub Profile](https://github.com/bhun0002)
+4. **Parth Patel** -     [GitHub Profile](https://github.com/pate0306)  
 
-### Part One (Lab-A03)
+## 1. GitHub Repository Initial Settings
 
-- Use Pulumi to provision the IaC resources
-  - Azure Container Registry (ACR)
-  - Azure Container Instances (ACI)
-- Use Pulumi to package the application into a Docker container and deploy it
+One lab partner, create a new repository on GitHub called `cst8918-w25-finalproject`. Initialize the repository with a README file and a `.gitignore` file for Terraform.
 
-### Part Two (Hybrid-H03)
+> **TIP:**
+> Copy the `.gitignore` file from an earlier assignment.
 
-- Add proper secret handling for the OpenWeather API key
-- Modify the application code to utilize a shared Redis instance
-- Update the Pulumi config to provision additional IaC resources
-  - Azure Cache for Redis
-- Update the container image version and redeploy with Pulumi
+### Add a Collaborator
 
-### Teams
+Add your lab partner as a collaborator to the repository. This will allow them to push changes, and create or approve pull requests in the repository.
 
-- Work in pairs using a shared GitHub repo.
-- Divide the tasks and work in parallel.
-- Practice committing, pushing and resolving conflicts (if needed).
-- The submitted repo must include meaningful commits from each team member.
-- Only one team member needs to submit on Brightspace.
+Near the top of your `README.md`, note the names and college usernames of your team members, and link to their GitHub profiles.
 
-### Starter Repo
+### Branch Protection Rules
 
-> [!IMPORTANT]
-> Do not simply continue from the previous assignment's repo.
+To protect the `main` branch, create a branch protection rule set that:
 
-Fork and then clone this repo to have a clean common starting point. There are a couple of changes from the original repo, most significantly the Dockerfile. It would be worth your time to look at the structure of the Dockerfile. It is a good example of how to define a multi-stage build for a node.js app.
+- Prevents direct pushes to the branch. This will require all changes to be made through a pull request.
+- Restricts deletion of the branch.
+- Requires at least one approving review before merging.
 
-Create a working branch for this lab called `lab-a03`. Do all of your work in this branch.
+Later you should add more rules to this set, but for now, these are the minimum requirements.
 
-**Do not push code directly to the `main` branch.**
 
-> [!TIP]
-> Remember to run `npm install` in the project folder after you clone it. This will install all of the Node.js dependencies required to do local testing with the Remix dev server.
+### GitHub Environment
 
-## Part One (A01) - Add Pulumi to the project
+The GitHub Actions workflows that you will create utilize GitHub Environments and Secrets to store the Azure identity information and set up an approval process for deployments. In the `Settings > Environments` tab of your repository, create an environment named `production`.
 
-Create a new folder at the top level of the project called `infrastructure`, then make that your working directory.
 
-```sh
-mkdir infrastructure && cd infrastructure
+#### Deployment Protection Rules
+
+On a bigger team, you may want to require approval before deploying to production. Or, you may want to restrict which branches can deploy to production. These rules can be set in the `Settings > Environments` tab of your repository.
+
+For this lab, set the `production` environment to only deploy from the `main` branch and require approval before deploying. Set both team members as the only people who can approve the deployment and check the box to **Prevent self-review**.
+
+
+## 1. GitHub Repository Initial Settings
+
+One lab partner, create a new repository on GitHub called `cst8918-Final-Project-Group-14`. Initialize the repository with a README file and a `.gitignore` file for Terraform.
+
+
+### Add a Collaborator
+
+Add your lab partners as a collaborator to the repository. This will allow them to push changes, and create or approve pull requests in the repository.
+
+### Branch Protection Rules
+
+To protect the `main` branch, create a branch protection rule set that:
+
+- Prevents direct pushes to the branch. This will require all changes to be made through a pull request.
+- Restricts deletion of the branch.
+- Requires at least one approving review before merging.
+
+Later you should add more rules to this set, but for now, these are the minimum requirements.
+
+### GitHub Environment
+
+The GitHub Actions workflows that you will create utilize GitHub Environments and Secrets to store the Azure identity information and set up an approval process for deployments. In the `Settings > Environments` tab of your repository, create an environment named `production`.
+
+
+#### Deployment Protection Rules
+
+On a bigger team, you may want to require approval before deploying to production. Or, you may want to restrict which branches can deploy to production. These rules can be set in the `Settings > Environments` tab of your repository.
+
+For this lab, set the `production` environment to only deploy from the `main` branch and require approval before deploying. Set all team members as the  people who can approve the deployment and check the box to **Prevent self-review**.
+
+
+---
+
+## 2. Create Azure Infrastructure to Store Terraform State
+
+As you will be using GitHub Actions to run Terraform, you will need to store the Terraform state file in a remote location. In this lab, you will use an Azure Storage Account to store the Terraform state file.
+
+In last week's lab, you created the storage account and container manually using AZ CLI. This week, you will create them using a separate Terraform module. All of the Terraform configuration for the storage account and container should be created in the `terraform/backend` folder. This will keep the Terraform configuration for the storage account and container separate from the configuration for the AKS cluster.
+
+
+The reason for separating the two configurations is because the storage account and container are used to store the Terraform state file for the app infrastructure configuration. If the backend infrastructure and app infrastructure are in the same configuration, you will run into a chicken-and-egg problem where the Terraform state file is stored in the storage account that is being created by Terraform.
+
+### Create the Backend Terraform Configuration
+
+This will be a simple configuration with only the necessary resources to store the Terraform state file. It can all go in the `main.tf` file. The configuration should include:
+
+- The `terraform` block.
+- The `provider` block.
+- A resource group called `<your-college-id>-githubactions-rg`.
+- A storage account named `<your-college-id>githubactions`.
+- The storage account should require a minimum version of `TLS1_2`.
+- A container in the storage account called `tfstate` - make sure it is private.
+
+
+The output of the configuration should be the _resource group name_, _storage account name_, the _container name_, and the _primary access key_ (which will be added to the GitHub secrets). These will be the values that you need to use in the app infrastructure configuration's `backend` block.
+
+### Verify and Deploy the Backend Terraform Configuration
+
+You will deploy the backend Terraform configuration using your local AZ CLI credentials. You will need to have the Azure CLI installed and be logged in to your Azure account. Then you can run the following commands to validate and deploy the backend configuration.
+
+```bash
+cd terraform/backend
+terraform init
+terraform fmt
+terraform validate
+terraform apply tf-backend.plan
 ```
 
-Use the Pulumi CLI to initialize this infrastructure folder as a Pulumi project that will use Typescript.
+## Create the Base Terraform Configuration for the App Infrastructure
 
-```sh
-pulumi new typescript
+Set up the base Terraform configuration for the app infrastructure in the `./terraform/environments/dev` folder. Create a `terraform.tf` file that defines:
+
+- The `terraform` block.
+- The `provider` block.
+- The `terraform.backend` block.
+
+The backend configuration should use the Azure Storage Account you created in the previous step, and the file name (key) should be `prod.app.tfstate`.
+
+### Add a Resource Group
+
+To test the Terraform configuration, add a resource group in the `main.tf` file. The resource group should be named `<your-college-id>-a12-rg`.
+
+### Test It!
+
+One of the best practices from software development is to develop in small increments and test often. Run the following commands to validate and deploy the Terraform configuration.
+
+> **IMPORTANT:**
+> Before you can test the Terraform configuration, you will need to set the `ARM_ACCESS_KEY` environment variable to the primary access key of the storage account. You can get this from the output of the backend Terraform configuration. You can set the environment variable with the following command:
+
+```bash
+# In the terraform/backend folder
+
+export ARM_ACCESS_KEY=$(terraform output -raw arm_access_key)
 ```
 
-Provide the following values when prompted:
+Then you can run the following commands to validate and deploy the Terraform configuration.
 
-- _project name:_ cst8918-a03-infra
-- _project description:_ A Remix app deployed with the Azure Container App service
-- _stack name:_ prod
+```bash
+# In the ./terraform/environments/dev folder
 
-This will create a minimal Pulumi config for a **prod** stack. It doesn't do anything yet. Let's fix that!
-
-### Set the _prod_ environment config variables
-
-There are going to be a few environment variables that we need to set. That can be done either via the Pulumi CLI, or by directly editing the `Pulumi.prod.yaml` file (which does not exist until you create it or add the first config value).
-
-Start with setting the desired Azure region for your production deployment. Our organization is using `westus3`. We are going to use the `@pulumi\azure-native` SDK to interface with Azure, so the command is ...
-
-```sh
-pulumi config set azure-native:location westus3
+terraform init
+terraform fmt
+terraform validate
+terraform apply tf-app.plan
 ```
 
-We will use the Pulumi Docker library module to generate the containerize image. It needs to know the path to find the _Dockerfile_ for our application, the public port number to expose, and the CPU and Memory resource limits.
+- Verify that there were no errors in the output of the `terraform apply` command.
+- Verify that the resource group was created in the Azure portal.
+- Verify that the Terraform state file was created in the storage account.
 
-> [!TIP]
-> See the [Pulumi Docker Library Docs](https://www.pulumi.com/registry/packages/docker/) for more information.
+Now you have the base Terraform configuration for the app infrastructure, and it correctly connects to Azure Blob Storage for the remote Terraform state file. You will add the AKS cluster and the deployment of the sample web application later in this lab. For now, you will complete the steps to create the GitHub Actions CI/CD workflows.
 
-You can edit the `Pulumi.prod.yaml` file directly to add the remaining config params. It should look like this.
+
+## 3. Create Azure credentials to be used by GitHub Actions
+
+In order to allow GitHub Actions to automate CI/CD tasks, you need to create a service account that GitHub will use to authenticate with Azure. Following the best practice of granting the least required privilege, you will create two accounts.
+
+The first will be used for jobs requiring read-only access. These will be pre-deployment validation tasks.
+
+The second will be used for deploying your infrastructure and applications. This will need read/write access.
+
+### Before you start
+
+You will need your Azure subscription ID and Azure tenant ID. You can look up these details with the `az account show` command. In the output, you will see the `id` (subscription ID) and `tenantId` fields. Copy these for use in later steps.
+
+To make it easier to insert these values in CLI commands, you can capture the output of the commands and assign them to shell environment variables, like this.
+
+```bash
+export subscriptionId=$(az account show --query id -o tsv)
+export tenantId=$(az account show --query tenantId -o tsv)
+```
+
+
+### Create a pair of Azure AD applications with service principals
+
+The next step is to create an Azure AD application and service principal. In a later step you will attach _federated credentials_ that will be used by GitHub Actions to authenticate with Azure.
+
+You will create two Azure AD applications and service principals. One will have the `contributor` role for the resource group, and the other will have the `reader` role. The `contributor` role will be used to deploy the AKS cluster and the sample web application. The `reader` role will be used to read the Terraform state file from the storage account and validate the current state of the infrastructure.
+
+**These commands will all be run in the Azure CLI.**
+
+#### For the `contributor` role
+
+Create an Azure AD application with the display name `<your-college-id>-githubactions-rw`. Note the `-rw` for read/write.
+
+```bash
+az ad app create --display-name <your-college-id>-githubactions-rw
+```
+
+Copy the `appId` property from the JSON output. You will need this later as one of the GitHub secrets and in some other CLI commands. You can assign it to a shell environment variable like this.
+
+```bash
+export appIdRW=<appId>
+```
+
+Now use that `appId` to create a service principal.
+
+```bash
+az ad sp create --id $appIdRW
+```
+
+Get the object id of the service principal
+
+```bash
+export assigneeObjectId=$(az ad sp show --id $appIdRW --query id -o tsv)
+```
+
+Assign the `contributor` role to the service principal for your project's resource group.
+
+```bash
+az role assignment create \
+  --role contributor \
+  --subscription $subscriptionId \
+  --assignee-object-id $assigneeObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName
+```
+
+#### Repeat those steps for the `reader` role
+
+Create an Azure AD application with the display name `<your-college-id>-githubactions-r`. Note the `-r` for read.
+
+```bash
+az ad app create --display-name <your-college-id>-githubactions-r
+```
+
+Copy the `appId` property from the JSON output. You will need this later as one of the GitHub secrets.
+
+```bash
+export appIdR=<appId>
+```
+
+Now, use that `appId` to create a service principal.
+
+```bash
+az ad sp create --id $appIdR
+```
+
+Get the object id of the service principal
+
+```bash
+export assigneeObjectId=$(az ad sp show --id $appIdR --query id -o tsv)
+```
+
+Assign the `reader` role to the service principal for your project's resource group.
+
+```bash
+az role assignment create \
+  --role reader \
+  --subscription $subscriptionId \
+  --assignee-object-id $assigneeObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName
+```
+
+### Create three Federated Credentials
+
+**The first** will be for the GitHub Actions triggered in the `production` environment, i.e. when a pull request is merged to the `main` branch. This will map to the `contributor` service principal with read/write access to the resource group.
+
+Create a new file at the path `infra/az-federated-credential-params/production-deploy.json` with the following contents.
+
+```json
+{
+  "name": "production-deploy",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:<your-github-username>/<repo-name>:environment:production",
+  "description": "CST8918 Lab12 - GitHub Actions",
+  "audiences": ["api://AzureADTokenExchange"]
+}
+```
+
+Then run the AZ CLI command to create the federated credential.
+
+```bash
+az ad app federated-credential create \
+  --id $appIdRW \
+  --parameters az-federated-credential-params/production-deploy.json
+```
+
+**The second credential** will be for GitHub Actions running pre-merge checks, mapping to the `reader` service principal.
+
+Create a new file at `infra/az-federated-credential-params/pull-request.json`.
+
+```json
+{
+  "name": "pull-request",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:<your-github-username>/<repo-name>:pull_request",
+  "description": "CST8918 Lab12 - GitHub Actions",
+  "audiences": ["api://AzureADTokenExchange"]
+}
+```
+
+Create the credential with the following command.
+
+```bash
+az ad app federated-credential create \
+  --id $appIdR \
+  --parameters az-federated-credential-params/pull-request.json
+```
+
+**The third credential** will be for GitHub Actions running on any push or pull request event on the main branch, mapping to the `reader` service principal.
+
+Create a new file at `infra/az-federated-credential-params/branch-main.json`.
+
+```json
+{
+  "name": "branch-main",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:<your-github-username>/<repo-name>:branch:main",
+  "description": "CST8918 Lab12 - GitHub Actions",
+  "audiences": ["api://AzureADTokenExchange"]
+}
+```
+
+Create the credential with the following command.
+
+```bash
+az ad app federated-credential create \
+  --id $appIdR \
+  --parameters az-federated-credential-params/branch-main.json
+```
+
+OK. You now have the access credentials that GitHub will use to authenticate with Azure. These credentials are stored in the Azure Active Directory and are used by the GitHub Actions to access the Azure resources.
+
+Your GitHub Actions workflows will access Azure resources using OpenID Connect (OIDC). This means that your workflows authenticate directly to Azure, and that there is no need to store credentials as long-lived secrets which provides security benefits. 
+
+
+
+## 4. GitHub Secrets
+GitHub allows you to store a common set of values (variables or secrets) that can be used in your workflows. These secrets are encrypted and can be used in your workflows to authenticate with external services, or to store sensitive information. Values set at the repository level are available to all workflows in the repository. Values set at the environment level are available only to workflows in the environment and will override repository level values with the same name.
+
+### Repository level secrets
+Create four secrets at the repository level. These will be the default values used by GitHub Actions workflows to authenticate with Azure.
+
+- `AZURE_TENANT_ID` - the `id` of your Azure AD Tenant
+- `AZURE_SUBSCRIPTION_ID` - the `id` of your Azure subscription within that tenant
+- `AZURE_CLIENT_ID` - the `appId` of the Azure AD application with the `reader` role
+- `ARM_ACCESS_KEY` - the `primary_access_key` of the Azure Storage Account that stores the Terraform state file
+
+
+
+### Environment level secrets
+In the `production` environment, create a secret for the `AZURE_CLIENT_ID` of the Azure AD application with the `contributor` role. This will allow the `production` environment to deploy the infrastructure and application to Azure.
+
+**The environment level secrets are available only to workflows in the environment and will override repository level values with the same name.**
+
+
+## 5. Use OpenID Connect (OIDC) in Terraform Configuration
+
+OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol. It allows clients to verify the identity of the end-user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the end-user in an interoperable and REST-like manner.
+
+OIDC is used in this lab to authenticate with Azure resources. This means that your Terraform configuration will authenticate directly to Azure, and that there is no need to store credentials as long-lived secrets which provides security benefits.
+
+### Update the Terraform configuration
+
+Update the `providers.tf` file in the `./terraform/environments/dev` folder.
+
+Add the `use_oidc = true` argument to both the `backend` and `azurerm` provider blocks.
+
+See lines 13 and 19 below:
+
+```hcl
+terraform {
+  required_version = "~> 1.5"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.96.0"
+    }
+  }
+  backend "azurerm" {
+    storage_account_name = "mckennrgithubactions"
+    container_name       = "tfstate"
+    key                  = "prod.app.tfstate"
+    use_oidc             = true
+  }
+}
+
+provider "azurerm" {
+  features {}
+  use_oidc = true
+}
+```
+## 6. Create the GitHub Actions Workflows
+
+Create several GitHub Actions workflows to automate the CI/CD process for the application infrastructure Terraform configuration. The workflows will run static code analysis, integration tests, and deploy the infrastructure to Azure.
+
+
+
+
+### 6.1 Static Code Analysis
+
+The first workflow will run static code analysis on the Terraform configuration. This will include running `terraform fmt` and `terraform validate` on the configuration. It will also run [checkov](https://www.checkov.io/) to check for security issues.
+
+This workflow will be triggered on _any push_ to _any branch_, ensuring that all commits pushed to the repository are checked for common errors.
+
+Create a new GitHub Actions workflow in the `.github/workflows` folder (at the root of the repository) called `infra-static_tests.yml`. Add the following content to the file:
+
+<details>
+<summary>Show workflow details</summary>
 
 ```yaml
-config:
-  azure-native:location: westus3
-  cst8918-a03-infra:appPath: ../
-  cst8918-a03-infra:containerPort: '80'
-  cst8918-a03-infra:publicPort: '80'
-  cst8918-a03-infra:cpu: '1'
-  cst8918-a03-infra:memory: '2'
-  cst8918-a03-infra:prefixName: 'cst8918-a03-<your-username>'
-  cst8918-a03-infra:imageTag: 'v0.1.0'
+name: 'Terraform Static Tests'
+
+on:
+  push:
+
+defaults:
+  run:
+    working-directory: ./terraform/environments/dev
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  terraform-static-tests:
+    name: 'Terraform Static Tests'
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    # The -backend=false flag is used to prevent Terraform from using the remote backend, which is not needed for static tests.
+    - name: Terraform Init
+      run: terraform init -backend=false
+
+    # Validate terraform files
+    - name: Terraform Validate
+      run: terraform validate
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    # Note: This will not modify files, but will exit with a non-zero status if any files need formatting
+    - name: Terraform Format
+      run: terraform fmt -check -recursive
+
+    # Perform a security scan of the terraform code tfsec
+    - name: tfsec
+      uses: tfsec/tfsec-sarif-action@master
+      with:
+        sarif_file: tfsec.sarif         
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        # Path to SARIF file relative to the root of the repository
+        sarif_file: tfsec.sarif
 ```
 
-> [!IMPORTANT]
-> Please update the `prefixName` value to replace `<your-username>` with your correct college username. e.g. my username is `mckennr`, so my prefixName would be `cst8918-a03-mckennr`. We will use this prefixName in several places when creating various infrastructure resources.
+## 6. Create the GitHub Actions workflows
 
-### Install some helper modules
+### 6.2 Integration tests
 
-Since we are going to deploy Docker containers on Azure, you will need to install a couple of extra Pulumi modules. Make sure that you are still in the `infrastructure` folder, then run ...
+The second workflow will run integration tests on the Terraform configuration. This will include running `terraform init`, `terraform plan`, and `tflint` to check for common errors and best practices. These are more computationally expensive than the static tests, so they will only be run on _pull requests_ or push to the _main branch_.
+
+
+Create a new GitHub Actions workflow in the `.github/workflows` folder called `infra-ci-cd.yml`.
+
+Add the following content to the file.
+
+<details><summary>Show workflow details</summary>
+
+```yaml
+name: Terraform CI-CD
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+# Special permissions required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+# These environment variables are used by the Terraform Azure provider to setup OIDC authentication.
+env:
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  ARM_ACCESS_KEY: "${{ secrets.ARM_ACCESS_KEY }}"
+
+defaults:
+  run:
+    working-directory: ./terraform/environments/dev 
+  
+jobs:
+  tflint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      name: Checkout source code
+
+    - uses: actions/cache@v4
+      name: Cache plugin dir
+      with:
+        path: ~/.tflint.d/plugins
+        key: tflint-${{ hashFiles('.tflint.hcl') }}
+
+    - uses: terraform-linters/setup-tflint@v4
+      name: Setup TFLint
+      with:
+        tflint_version: latest
+
+    - name: Show version
+      run: tflint --version
+
+    - name: Init TFLint
+      run: tflint --init
+      env:
+        # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Run TFLint
+      id: tflint
+      run: tflint -f compact
+```
+</details>
+
+That will run the `tflint` tool. Now, at the bottom of the file, add the instructions to run Terraform plan and publish the result to the GitHub PR discussion thread.
+
+<details><summary>Show additional workflow details</summary>
+
+```yaml
+  terraform-plan:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    env:
+      # This is needed since we are running Terraform with read-only permissions
+      ARM_SKIP_PROVIDER_REGISTRATION: true
+    outputs:
+      tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of the Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    # Initialize a new or existing Terraform working directory
+    - name: Terraform Init
+      run: terraform init
+
+    # Validate Terraform configuration format
+    - name: Terraform Format
+      run: terraform fmt -check
+
+    # Generate an execution plan for Terraform
+    - name: Terraform Plan
+      id: tf-plan
+      run: |
+        export exitcode=0
+        terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
+
+        echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+        
+        if [ $exitcode -eq 1 ]; then
+          echo Terraform Plan Failed!
+          exit 1
+        else
+          exit 0
+        fi
+        
+    # Save plan to artifacts  
+    - name: Publish Terraform Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: tfplan
+        
+    # Create string output of Terraform Plan
+    - name: Create String Output
+      id: tf-plan-string
+      run: |
+        TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+        
+        delimiter="$(openssl rand -hex 8)"
+        echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
+        echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
+        echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo '```terraform' >> $GITHUB_OUTPUT
+        echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
+        echo '```' >> $GITHUB_OUTPUT
+        echo "</details>" >> $GITHUB_OUTPUT
+        echo "${delimiter}" >> $GITHUB_OUTPUT
+        
+    # Publish Terraform Plan as task summary
+    - name: Publish Terraform Plan to Task Summary
+      env:
+        SUMMARY: ${{ steps.tf-plan-string.outputs.summary }}
+      run: |
+        echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+      
+    # If this is a PR post the changes
+    - name: Push Terraform Output to PR
+      if: github.ref != 'refs/heads/main'
+      uses: actions/github-script@v7
+      env:
+        SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
+      with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `${process.env.SUMMARY}`;
+            github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+            })
+```
+</details>
+
+#### Add tflint configuration
+In the `infra/tf-app` directory, create a new file called `.tflint.hcl` and add the following content.
+
+```hcl
+plugin "terraform" {
+  enabled = true
+  preset  = "all"
+}
+
+plugin "azurerm" {
+  enabled = true
+  version = "0.25.1"
+  source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
+}
+```
+
+Commit the changes to your local repository and then push the changes to GitHub. The workflow will run automatically when you open a pull request.
+
+**Check the results in the PR discussion thread.**
+
+### 6.3 Terraform deploy
+
+The third workflow will deploy the Terraform configuration to Azure. This workflow will be triggered on a merge to the main branch from a pull-request.
+
+Update the GitHub Actions workflow in the `.github/workflows` folder called `infra-ci-cd.yml`.
+
+Add the following content to the bottom of the file.
+
+<details><summary>Show workflow details</summary>
+
+```yaml
+# This will only run if the terraform plan has changes, and when the PR is approved and merged to main.
+  terraform-apply:
+    name: 'Terraform Apply'
+    if: github.ref == 'refs/heads/main' && needs.terraform-plan.outputs.tfplanExitCode == 2
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [terraform-plan]
+    
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+
+    # Download saved plan from artifacts  
+    - name: Download Terraform Plan
+      uses: actions/download-artifact@v4
+      with:
+        name: tfplan
+
+    # Terraform Apply
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+```
+</details>
+
+This workflow will only run if the terraform plan has changes, and when the PR is approved and merged to the `main` branch. The workflow will use the production environment, and therefore the Azure clientID with read/write permission. The workflow will depend on the `terraform-plan` job to have previously completed successfully.
+
+
+### 6.4 Daily drift detection
+
+Configuration drift is a common issue in infrastructure as code (IaC) environments. Drift occurs when the deployed infrastructure does not match the desired state defined in the Terraform configuration. This can happen due to manual changes made to the infrastructure, or changes made outside of the Terraform configuration, i.e. when there are a mix of tools being used.
+
+The final workflow will run daily to detect drift between the deployed infrastructure and the Terraform configuration. This workflow will be triggered on a schedule (like a CRON task), running once a day.
+
+If drift is detected, the workflow will create an issue in the repository to alert the team.
+
+If there is no drift, the workflow will automatically close any open issues related to drift detection.
+
+Create a new GitHub Actions workflow in the `.github/workflows` folder called `infra-drift-detection.yml`. Add the following content to the file.
+
+<details><summary>Show workflow details</summary>
+
+```yaml
+name: 'Terraform Configuration Drift Detection'
+
+on:
+  workflow_dispatch: 
+  schedule:
+    - cron: '41 3 * * *' # runs nightly at 3:41 am
+
+#Special permissions required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+#These environment variables are used by the terraform azure provider to setup OIDD authenticate. 
+env:
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  # This one is for the storage account that stores the terraform state
+  ARM_ACCESS_KEY: "${{ secrets.ARM_ACCESS_KEY }}"
+
+jobs:
+  terraform-plan:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    env:
+      #this is needed since we are running terraform with read-only permissions
+      ARM_SKIP_PROVIDER_REGISTRATION: true
+    outputs:
+      tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of the Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+
+    # Generates an execution plan for Terraform
+    # An exit code of 0 indicated no changes, 1 a terraform failure, 2 there are pending changes.
+    - name: Terraform Plan
+      id: tf-plan
+      run: |
+        export exitcode=0
+        terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
+        
+        echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+        
+        if [ $exitcode -eq 1 ]; then
+          echo Terraform Plan Failed!
+          exit 1
+        else 
+          exit 0
+        fi
+        
+    # Save plan to artifacts  
+    - name: Publish Terraform Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: tfplan
+        
+    # Create string output of Terraform Plan
+    - name: Create String Output
+      id: tf-plan-string
+      run: |
+        TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+        
+        delimiter="$(openssl rand -hex 8)"
+        echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
+        echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
+        echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo '```terraform' >> $GITHUB_OUTPUT
+        echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
+        echo '```' >> $GITHUB_OUTPUT
+        echo "</details>" >> $GITHUB_OUTPUT
+        echo "${delimiter}" >> $GITHUB_OUTPUT
+        
+    # Publish Terraform Plan as task summary
+    - name: Publish Terraform Plan to Task Summary
+      env:
+        SUMMARY: ${{ steps.tf-plan-string.outputs.summary }}
+      run: |
+        echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+
+    # If changes are detected, create a new issue
+    - name: Publish Drift Report
+      if: steps.tf-plan.outputs.exitcode == 2
+      uses: actions/github-script@v7
+      env:
+        SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
+      with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `${process.env.SUMMARY}`;
+            const title = 'Terraform Configuration Drift Detected';
+            const creator = 'github-actions[bot]'
+
+            // Look to see if there is an existing drift issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              creator: creator,
+              title: title
+            })
+              
+            if( issues.data.length > 0 ) {
+              // We assume there shouldn't be more than 1 open issue, since we update any issue we find
+              const issue = issues.data[0]
+              
+              if ( issue.body == body ) {
+                console.log('Drift Detected: Found matching issue with duplicate content')
+              } else {
+                console.log('Drift Detected: Found matching issue, updating body')
+                github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: body
+                })
+              }
+            } else {
+              console.log('Drift Detected: Creating new issue')
+
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body
+             })
+            }
+            
+    # If changes aren't detected, close any open drift issues
+    - name: Publish Drift Report
+      if: steps.tf-plan.outputs.exitcode == 0
+      uses: actions/github-script@v7
+      with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = 'Terraform Configuration Drift Detected';
+            const creator = 'github-actions[bot]'
+
+            // Look to see if there is an existing drift issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              creator: creator,
+              title: title
+            })
+              
+            if( issues.data.length > 0 ) {
+              const issue = issues.data[0]
+              
+              github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              })
+            } 
+             
+    # Mark the workflow as failed if drift detected 
+    - name: Error on Failure
+      if: steps.tf-plan.outputs.exitcode == 2
+      run: exit 1
+
+```
+</details>
+
+## Testing the Workflow
+
+Commit the changes to your local repository and then push the changes to GitHub. The workflow will run at the next scheduled time, but you can test it by running the workflow manually in the Actions tab of your repository.
+
+> **TIP**  
+> You can only trigger the workflow manually if you have the `workflow_dispatch` event in the `on` section of the workflow file, and the workflow file is merged into the main branch.
+
+You can simulate drift by making a manual change to the deployed infrastructure in the Azure portal. This could involve changing a tag, adding a resource, or changing a configuration setting. When the workflow runs, it will detect the drift and create a new issue in the repository.
+
+
+### 7. Add Some Infrastructure Elements
+
+It is time to test everything out!
+
+Create a new git branch called `infra-elements` and switch to it.
 
 ```sh
-npm i @pulumi/docker @pulumi/azure-native
+git checkout -b infra-elements
 ```
 
-> [!TIP]
-> There are many other plugin modules available for Pulumi. You can find them and read their documentation on the [Pulumi Registry](https://www.pulumi.com/registry/). Spend some time browsing them and learning about the different modules that are available.
+### Update the Terraform Configuration
 
-### Declare the desired infrastructure
+Update the Terraform configuration in the `./terraform/environments/dev` folder to include the following additional resource elements:
 
-Its time to define the desired infrastructure shape. Open up the `index.ts` file in the `infrastructure` folder. Right now, it should just have one line, importing Pulumi.
+- A Virtual Network
+- A Subnet
 
-```ts
-import * as pulumi from '@pulumi/pulumi'
-```
+### Commit and Push Changes
 
-#### Load the application config information
+Commit your changes and push them to the repository. This should trigger the GitHub Actions workflow for the static analysis.
 
-To begin, load the configuration variables for the given environment (stack)
+### Create a Pull Request
 
-> [!NOTE]
-> Use the `pulumi config` command to view and set the values of the configuration options. The code below uses the `require` method to throw an error if the config value is not set. See the [Pulumi Config Docs](https://www.pulumi.com/docs/reference/pkg/nodejs/pulumi/pulumi/classes/Config.html) for more information.
+On GitHub, create a pull request to merge the `infra-elements` branch into the `main` branch. This should trigger the testing workflow.
 
-```ts
-// Import the configuration settings for the current stack.
-const config = new pulumi.Config()
-const appPath = config.require('appPath')
-const prefixName = config.require('prefixName')
-const imageName = prefixName
-const imageTag = config.require('imageTag')
-// Azure container instances (ACI) service does not yet support port mapping
-// so, the containerPort and publicPort must be the same
-const containerPort = config.requireNumber('containerPort')
-const publicPort = config.requireNumber('publicPort')
-const cpu = config.requireNumber('cpu')
-const memory = config.requireNumber('memory')
-```
+### Check GitHub Actions Workflows
 
-#### Define the container registry
+Check the GitHub Actions workflows to see the status of the pull request.
 
-According to the architecture diagram, our solution calls for a private container image repository rather than using Docker Hub as we did with the initial prototype. It is a best practice to place the application solution resources in a resource group for easier identification and monitoring.
 
-Create a new resource group. Use the prefixName + '-rg' for the name.
-At the top of your index.ts file, import the `resources` and `containerregistry` modules from the `@pulumi/azure-native` package.
+### Approve and Merge the Pull Request
 
-```ts
-import * as resources from '@pulumi/azure-native/resources'
-import * as containerregistry from '@pulumi/azure-native/containerregistry'
-```
+When everything is working as expected, approve and merge the pull request. You should now see the deployment workflow running.
 
-Append this definition code to the bottom of your index.ts file. **We will use the cost-optimized _basic_ registry SKU.**
+### Verify Deployment in Azure
 
-```ts
-// Create a resource group.
-const resourceGroup = new resources.ResourceGroup(`${prefixName}-rg`)
+When the deployment workflow is complete, check the Azure portal to verify that the new resources have been created.
 
-// Create the container registry.
-const registry = new containerregistry.Registry(`${prefixName}ACR`, {
-  resourceGroupName: resourceGroup.name,
-  adminUserEnabled: true,
-  sku: {
-    name: containerregistry.SkuName.Basic,
-  },
-})
-```
+### Screenshots
 
-Before you can tell the Docker module to store the container image in the container registry, you will need to get the registry's authentication credentials.
+### Cleanup
 
-```ts
-// Get the authentication credentials for the container registry.
-const registryCredentials = containerregistry
-  .listRegistryCredentialsOutput({
-    resourceGroupName: resourceGroup.name,
-    registryName: registry.name,
-  })
-  .apply((creds) => {
-    return {
-      username: creds.username!,
-      password: creds.passwords![0].value!,
-    }
-  })
-```
-
-This seems like a good time to check our work. _Temporarily,_ append these stack output instructions so that you can make sure that everything is working up to this point.
-
-```ts
-export const acrServer = registry.loginServer
-export const acrUsername = registryCredentials.username
-```
-
-And then run it in the terminal ...
-
-```sh
-pulumi up
-```
-
-Review the `plan` output, and correct any errors if needed. After you say 'yes' to apply the update, you should see the something similar to the following near the end of the output ...
-
-```sh
-Outputs:
-  + acrServer  : "containerregistry84d73e7d.azurecr.io"
-  + acrUsername: "containerRegistry84d73e7d"
-```
-
-> [!NOTE]
-> Pulumi automatically adds the random characters to the end of the registry name to ensure uniqueness. Yours will be slightly different.
-
-**SUCCESS !**
-
-> [!TIP]
-> OK now you can delete those last two `export` lines. You won't need them any more.
-
-#### Create the Docker image and store it in the container registry
-
-Import the `@pulumi/docker` module at the top of the index.ts file and then append the container definition to the bottom of the file. Of note, the `build.platform` option tells Docker what the target runtime architecture is. This will make sure to pull the right base image when processing the Dockerfile.
-
-```ts
-// Other imports at the top of the module
-import * as docker from '@pulumi/docker'
-
-// ... rest of the code
-
-// Define the container image for the service.
-const image = new docker.Image(`${prefixName}-image`, {
-  imageName: pulumi.interpolate`${registry.loginServer}/${imageName}:${imageTag}`,
-  build: {
-    context: appPath,
-    platform: 'linux/amd64',
-  },
-  registry: {
-    server: registry.loginServer,
-    username: registryCredentials.username,
-    password: registryCredentials.password,
-  },
-})
-```
-
-Notice the code above references the `imageTag` variable. You can use this to assign the current version of the application before publishing it. This makes it really easy to roll-back if needed! You should set it now. Use the pulumi CLI to set it to `v0.2.0` -- our app is still in the prototype stage :wink:
-
-```sh
-pulumi config set imageTag "v0.2.0"
-```
-
-#### Create an Azure Container App service container group
-
-Create a container group in the Azure Container App service and make it publicly accessible. Our system design calls for a linux container host (Azure also supports Windows hosts). This is a big chunk of code. Let's break it down.
-
-- the first section defines the container group meta info, including the host OS type and the image registry to pull from
-- then it defines the container images to use, any environment variables to inject, which target port to use on the container and resource limits for the containers.
-- the last section defines the public ingress: DNS name and IP address.
-
-```ts
-// Other imports at the top of the module
-import * as containerinstance from '@pulumi/azure-native/containerinstance'
-
-// ... rest of the code
-
-// Create a container group in the Azure Container App service and make it publicly accessible.
-const containerGroup = new containerinstance.ContainerGroup(
-  `${prefixName}-container-group`,
-  {
-    resourceGroupName: resourceGroup.name,
-    osType: 'linux',
-    restartPolicy: 'always',
-    imageRegistryCredentials: [
-      {
-        server: registry.loginServer,
-        username: registryCredentials.username,
-        password: registryCredentials.password,
-      },
-    ],
-    containers: [
-      {
-        name: imageName,
-        image: image.imageName,
-        ports: [
-          {
-            port: containerPort,
-            protocol: 'tcp',
-          },
-        ],
-        environmentVariables: [
-          {
-            name: 'PORT',
-            value: containerPort.toString(),
-          },
-          {
-            name: 'WEATHER_API_KEY',
-            value: '<your-secret-key>',
-          },
-        ],
-        resources: {
-          requests: {
-            cpu: cpu,
-            memoryInGB: memory,
-          },
-        },
-      },
-    ],
-    ipAddress: {
-      type: containerinstance.ContainerGroupIpAddressType.Public,
-      dnsNameLabel: `${imageName}`,
-      ports: [
-        {
-          port: publicPort,
-          protocol: 'tcp',
-        },
-      ],
-    },
-  },
-)
-```
-
-> [!WARNING]
-> Replace **\<your-secret-key\>** with your real API key. Yes, unencrypted for now -- we will take care of that in part two.
-
-##### Define the output values
-
-You will need to know the final IP address and the public URL to test the app in your browser.
-
-```ts
-// Export the service's IP address, hostname, and fully-qualified URL.
-export const hostname = containerGroup.ipAddress.apply((addr) => addr!.fqdn!)
-export const ip = containerGroup.ipAddress.apply((addr) => addr!.ip!)
-export const url = containerGroup.ipAddress.apply(
-  (addr) => `http://${addr!.fqdn!}:${containerPort}`,
-)
-```
-
-##### Test it!
-
-We still need to handle the secret encryption, but before we go any further it is a good idea to test your deployment.
-
-```sh
-pulumi up
-```
-
-After the deployment completes, you should be able to see the deployed resources in your Azure portal, and you should be able to open the output `URL` (e.g. http://cst8918-a03-mckennr.westus3.azurecontainer.io/) in your browser to see the app running.
-
-### Demo / Submit
-
-**Only one partner submit for the group on Brightspace**
-
-When you have completed Part One, make sure that you have committed all of your changes with git, and pushed your commits up to GitHub. Remember, this should be on a branch call `lab-a03`. Also add a screenshot of your browser showing the application running -- make sure the public URL is clearly visible. The screenshot should be in the root of your project folder with the name `lab-a03.png`.
-
-Submit a link to your GitHub repo for this assignment in Brightspace.
-
-## Clean-up!
-
-When you are all done, don't forget to clean up the unneeded Azure resources.
-
-```sh
-pulumi destroy
-```
-
-> [!CAUTION]
-> Failing to do this may exceed your Azure subscription limit, resulting in academic penalties!
-
-## Next Steps
-
-The instructions for Part Two of this practice scenario are in the [README-h03.md](https://github.com/rlmckenney/cst8918-w24-a03-weather-pulumi/blob/main/README-h03.md) file in this repo.
+When you have finished with the lab, don't forget to run `terraform destroy` to clean up the resources.
