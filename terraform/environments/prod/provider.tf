@@ -12,7 +12,7 @@ terraform {
     resource_group_name  = "final14cst8918dev-tfstate-rg"
     storage_account_name = "final14cst8918devtfstate"
     container_name       = "tfstate"
-    key                  = "dev.terraform.tfstate"
+    key                  = "prod.terraform.tfstate"
     use_oidc             = true
   }
 }

@@ -1,10 +1,10 @@
-resource_prefix    = "final14cst8918dev" # <-- use your unique prefix
+resource_prefix    = "final14cst8918prod" # <-- use your unique prefix
 location           = "canadaeast"
 aks_vm_size        = "Standard_B2s"
-environment        = "dev"
+environment        = "prod"
 aks_dns_service_ip = "10.240.0.10"
 aks_service_cidr   = "10.240.0.0/16"
 image_tag          = "latestV2"
-acr_login_server   = "final14cst8918devacr.azurecr.io"
+acr_login_server   = "final14cst8918prodacr.azurecr.io"
 image_name         = "cst8918-a01-weather-app"
-acr_name           = "final14cst8918devacr"
+acr_name           = "final14cst8918prodacr"
