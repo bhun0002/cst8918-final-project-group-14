@@ -8,6 +8,9 @@ output "vnet_name" {
 
 output "subnet_ids" {
   value = [
-    azurerm_subnet.admin.id
+    azurerm_subnet.admin.id,
+    azurerm_subnet.test.id,
+    azurerm_subnet.dev.id,
+    azurerm_subnet.prod.id
   ]
 }
