@@ -12,7 +12,7 @@ module "network" {
 }
 
 module "aks" {
-  source              = "../../aks"
+  source              = "../../aksprod"
   resource_prefix     = var.resource_prefix
   location            = var.location
   resource_group_name = module.network.resource_group_name
